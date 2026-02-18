@@ -13,6 +13,8 @@ use rnote_compose::penevent::ShortcutKey;
 use rnote_engine::engine::StrokeContent;
 use rnote_engine::ext::GraphenePointExt;
 use rnote_engine::pens::PenStyle;
+use rnote_engine::pens::pensconfig::selectorconfig::SelectorStyle;
+use rnote_engine::pens::pensconfig::toolsconfig::ToolStyle;
 use rnote_engine::strokes::resize::{ImageSizeOption, Resize};
 use rnote_engine::strokes::textstroke::TextAttribute;
 use rnote_engine::{Camera, Engine};
@@ -176,6 +178,20 @@ impl RnAppWindow {
         );
         self.add_action(&action_pen_style);
 
+        let action_selector_style = gio::SimpleAction::new_stateful(
+            "selector-style",
+            Some(&String::static_variant_type()),
+            &String::from("polygon").to_variant(),
+        );
+        self.add_action(&action_selector_style);
+
+        let action_tool_style = gio::SimpleAction::new_stateful(
+            "tool-style",
+            Some(&String::static_variant_type()),
+            &String::from("verticalspace").to_variant(),
+        );
+        self.add_action(&action_tool_style);
+
         // Open settings
         action_open_settings.connect_activate(clone!(
             #[weak(rename_to = appwindow)]
@@ -337,6 +353,77 @@ impl RnAppWindow {
                     appwindow.handle_widget_flags(widget_flags, &canvas);
                 }
                 action.set_state(&pen_style_str.to_variant());
+            }
+        ));
+
+        // Selector style
+        action_selector_style.connect_activate(clone!(
+            #[weak(rename_to=appwindow)]
+            self,
+            move |action, target| {
+                debug!("selector-style");
+
+                let selector_style_str = target.unwrap().str().unwrap();
+
+                let selector_style = match selector_style_str {
+                    "polygon" => SelectorStyle::Polygon,
+                    "rectangle" => SelectorStyle::Rectangle,
+                    "single" => SelectorStyle::Single,
+                    "intersectingpath" => SelectorStyle::IntersectingPath,
+                    _ => {
+                        error!(
+                            "Activated selector-style action with invalid target: {selector_style_str}"
+                        );
+                        return;
+                    }
+                };
+
+                appwindow
+                    .engine_config()
+                    .write()
+                    .pens_config
+                    .selector_config
+                    .style = selector_style;
+
+                action.set_state(&selector_style_str.to_variant());
+                appwindow.refresh_ui();
+            }
+        ));
+
+        // Tool style
+        action_tool_style.connect_activate(clone!(
+            #[weak(rename_to=appwindow)]
+            self,
+            move |action, target| {
+                debug!("tool-style");
+
+                let tool_style_str = target.unwrap().str().unwrap();
+
+                let tool_style = match tool_style_str {
+                    "verticalspace" => ToolStyle::VerticalSpace,
+                    "offsetcamera" => ToolStyle::OffsetCamera,
+                    "zoom" => ToolStyle::Zoom,
+                    "laser" => ToolStyle::Laser,
+                    _ => {
+                        error!("Activated tool-style action with invalid target: {tool_style_str}");
+                        return;
+                    }
+                };
+
+                appwindow
+                    .engine_config()
+                    .write()
+                    .pens_config
+                    .tools_config
+                    .style = tool_style;
+
+                if let Some(canvas) = appwindow.active_tab_canvas() {
+                    let widget_flags = canvas.engine_mut().reinstall_pen_current_style();
+                    appwindow.handle_widget_flags(widget_flags, &canvas);
+                }
+
+                action.set_state(&tool_style_str.to_variant());
+                appwindow.refresh_ui();
             }
         ));
 
@@ -1125,6 +1212,14 @@ impl RnAppWindow {
         app.set_accels_for_action("win.pen-style::eraser", &["<Ctrl>4", "<Ctrl>KP_4"]);
         app.set_accels_for_action("win.pen-style::selector", &["<Ctrl>5", "<Ctrl>KP_5"]);
         app.set_accels_for_action("win.pen-style::tools", &["<Ctrl>6", "<Ctrl>KP_6"]);
+        app.set_accels_for_action("win.selector-style::polygon", &["F1"]);
+        app.set_accels_for_action("win.selector-style::rectangle", &["F2"]);
+        app.set_accels_for_action("win.selector-style::single", &["F3"]);
+        app.set_accels_for_action("win.selector-style::intersectingpath", &["F4"]);
+        app.set_accels_for_action("win.tool-style::verticalspace", &["F5"]);
+        app.set_accels_for_action("win.tool-style::offsetcamera", &["F6"]);
+        app.set_accels_for_action("win.tool-style::zoom", &["F7"]);
+        app.set_accels_for_action("win.tool-style::laser", &["F8"]);
         // shortcuts for devel build
         if config::PROFILE.to_lowercase().as_str() == "devel" {
             app.set_accels_for_action("win.visual-debug", &["<Ctrl><Shift>v"]);
