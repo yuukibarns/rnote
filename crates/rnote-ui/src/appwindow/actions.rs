@@ -427,6 +427,40 @@ impl RnAppWindow {
             }
         ));
 
+        // Color setters
+        let color_setters = {
+            let p = self.overlays().colorpicker();
+            [
+                [p.setter_1(), p.setter_2(), p.setter_3()],
+                [p.setter_4(), p.setter_5(), p.setter_6()],
+                [p.setter_7(), p.setter_8(), p.setter_9()],
+            ]
+            .concat()
+        };
+        for (i, setter) in color_setters.into_iter().enumerate() {
+            let action = gio::SimpleAction::new(&format!("set-color-{}", i + 1), None);
+            self.add_action(&action);
+            action.connect_activate(clone!(
+                #[weak(rename_to=appwindow)]
+                self,
+                move |_, _| {
+                    if let Some(widget) = GtkWindowExt::focus(&appwindow)
+                        .and_then(|w| w.dynamic_cast::<gtk4::Editable>().ok())
+                    {
+                        widget.delete_selection();
+                        let mut p = widget.position();
+                        widget.insert_text(&format!("{}", i + 1), &mut p);
+                        widget.set_position(p);
+                        return;
+                    }
+                    let Some(canvas) = appwindow.active_tab_canvas() else {
+                        return;
+                    };
+                    setter.set_active(true);
+                }
+            ));
+        }
+
         // Tab actions
         action_active_tab_move_left.connect_activate(clone!(
             #[weak(rename_to=appwindow)]
@@ -1220,6 +1254,12 @@ impl RnAppWindow {
         app.set_accels_for_action("win.tool-style::offsetcamera", &["F6"]);
         app.set_accels_for_action("win.tool-style::zoom", &["F7"]);
         app.set_accels_for_action("win.tool-style::laser", &["F8"]);
+        (1..=9).for_each(|i| {
+            app.set_accels_for_action(
+                &format!("win.set-color-{i}"),
+                &[&format!("<Ctrl>F{i}")],
+            )
+        });
         // shortcuts for devel build
         if config::PROFILE.to_lowercase().as_str() == "devel" {
             app.set_accels_for_action("win.visual-debug", &["<Ctrl><Shift>v"]);
