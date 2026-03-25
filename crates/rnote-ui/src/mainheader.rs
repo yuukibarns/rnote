@@ -1,5 +1,5 @@
 // Imports
-use crate::{appmenu::RnAppMenu, appwindow::RnAppWindow, canvasmenu::RnCanvasMenu};
+use crate::{RnPenPicker, appmenu::RnAppMenu, appwindow::RnAppWindow, canvasmenu::RnCanvasMenu};
 use gtk4::{
     Box, CompositeTemplate, EventControllerLegacy, Label, ToggleButton, Widget, glib, prelude::*,
     subclass::prelude::*,
@@ -14,9 +14,7 @@ mod imp {
         #[template_child]
         pub(crate) headerbar: TemplateChild<adw::HeaderBar>,
         #[template_child]
-        pub(crate) main_title: TemplateChild<adw::WindowTitle>,
-        #[template_child]
-        pub(crate) main_title_unsaved_indicator: TemplateChild<Label>,
+        pub(crate) penpicker: TemplateChild<RnPenPicker>,
         #[template_child]
         pub(crate) left_sidebar_reveal_toggle: TemplateChild<ToggleButton>,
         #[template_child]
@@ -82,12 +80,8 @@ impl RnMainHeader {
         self.imp().headerbar.get()
     }
 
-    pub(crate) fn main_title(&self) -> adw::WindowTitle {
-        self.imp().main_title.get()
-    }
-
-    pub(crate) fn main_title_unsaved_indicator(&self) -> Label {
-        self.imp().main_title_unsaved_indicator.get()
+    pub(crate) fn penpicker(&self) -> RnPenPicker {
+        self.imp().penpicker.get()
     }
 
     pub(crate) fn left_sidebar_reveal_toggle(&self) -> ToggleButton {
@@ -111,6 +105,7 @@ impl RnMainHeader {
 
         imp.canvasmenu.get().init(appwindow);
         imp.appmenu.get().init(appwindow);
+        imp.penpicker.get().init(appwindow);
 
         // add controllers to elements to prevent accidental resizes: left buttons
         let capture_left = EventControllerLegacy::builder()

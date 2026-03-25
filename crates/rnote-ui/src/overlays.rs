@@ -1,7 +1,7 @@
 // Imports
 use crate::RnPensSideBar;
 use crate::canvaswrapper::RnCanvasWrapper;
-use crate::{RnAppWindow, RnColorPicker, RnPenPicker, dialogs};
+use crate::{RnAppWindow, RnColorPicker, dialogs};
 use core::time::Duration;
 use gtk4::{
     CompositeTemplate, Overlay, ProgressBar, ScrolledWindow, Widget, gio, glib, glib::clone,
@@ -27,8 +27,6 @@ mod imp {
         pub(crate) toast_overlay: TemplateChild<adw::ToastOverlay>,
         #[template_child]
         pub(crate) progressbar: TemplateChild<ProgressBar>,
-        #[template_child]
-        pub(crate) penpicker: TemplateChild<RnPenPicker>,
         #[template_child]
         pub(crate) colorpicker: TemplateChild<RnColorPicker>,
         #[template_child]
@@ -77,8 +75,6 @@ mod imp {
             self.toolbar_overlay
                 .set_measure_overlay(&*self.colorpicker, true);
             self.toolbar_overlay
-                .set_measure_overlay(&*self.penpicker, true);
-            self.toolbar_overlay
                 .set_measure_overlay(&*self.sidebar_box, true);
         }
     }
@@ -102,10 +98,6 @@ impl Default for RnOverlays {
 impl RnOverlays {
     pub(crate) fn new() -> Self {
         glib::Object::new()
-    }
-
-    pub(crate) fn penpicker(&self) -> RnPenPicker {
-        self.imp().penpicker.get()
     }
 
     pub(crate) fn colorpicker(&self) -> RnColorPicker {
@@ -140,7 +132,6 @@ impl RnOverlays {
         let imp = self.imp();
         imp.colorpicker.get().init(appwindow);
         imp.penssidebar.get().init(appwindow);
-        imp.penpicker.get().init(appwindow);
         imp.penssidebar.get().brush_page().init(appwindow);
         imp.penssidebar.get().shaper_page().init(appwindow);
         imp.penssidebar.get().typewriter_page().init(appwindow);

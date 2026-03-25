@@ -294,7 +294,6 @@ impl ObjectImpl for RnAppWindow {
                 let focus_mode: bool = value.get().expect("The value needs to be of type `bool`");
                 self.focus_mode.replace(focus_mode);
 
-                self.overlays.penpicker().set_visible(!focus_mode);
                 self.overlays.colorpicker().set_visible(!focus_mode);
                 self.overlays.sidebar_box().set_visible(!focus_mode);
             }
@@ -685,6 +684,7 @@ impl RnAppWindow {
                 .set_placement(CornerType::TopRight);
 
             obj.overlays().sidebar_box().set_halign(Align::Start);
+            obj.overlays().colorpicker().set_halign(Align::End);
             obj.overlays()
                 .sidebar_scroller()
                 .set_placement(CornerType::TopRight);
@@ -802,6 +802,7 @@ impl RnAppWindow {
                 .set_placement(CornerType::TopLeft);
 
             obj.overlays().sidebar_box().set_halign(Align::End);
+            obj.overlays().colorpicker().set_halign(Align::Start);
             obj.overlays()
                 .sidebar_scroller()
                 .set_placement(CornerType::TopLeft);
